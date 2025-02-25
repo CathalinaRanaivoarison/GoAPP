@@ -1,11 +1,33 @@
 pipeline {
     agent any
+
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/ST2DCE/project.git'
+                git branch: 'main', 
+                    credentialsId: 'github-credentials-id', 
+                    url: 'https://github.com/CathalinaRanaivoarison/GoAPP.git'
             }
         }
+        
+        stage('Afficher l\'arborescence et le répertoire') {
+            steps {
+                script {
+                    sh 'pwd'
+                    sh 'ls -R'
+                }
+            }
+        }
+        
+        stage('Check Docker Version') {
+            steps {
+                script {
+                    sh 'docker --version'
+                }
+            }
+        }
+        
+        
         stage('Build Docker Image') {
             steps {
                 script {
@@ -13,10 +35,20 @@ pipeline {
                 }
             }
         }
+
+        stage('Stop Existing Container') {
+            steps {
+                script {
+                    sh 'docker stop my-go-app-container || true'
+                    sh 'docker rm my-go-app-container || true'
+                }
+            }
+        }
+
         stage('Run Docker Container') {
             steps {
                 script {
-                    docker.run("my-go-app", "-p 8080:8080")
+                    sh 'docker run -d -p 8081:8081 --name my-go-app-container my-go-app'
                 }
             }
         }
