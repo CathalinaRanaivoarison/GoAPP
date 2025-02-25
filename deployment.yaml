@@ -15,6 +15,6 @@ spec:
       containers:
         - name: my-go-app
           image: my-go-app
+          imagePullPolicy: Never  # Doit être ici, dans la section du conteneur
           ports:
             - containerPort: 8081
-      imagePullPolicy: Never  # Utilisation de l'image locale
