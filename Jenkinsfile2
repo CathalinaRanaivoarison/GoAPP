@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', 
+                    credentialsId: 'github-credentials-id', 
+                    url: 'https://github.com/CathalinaRanaivoarison/GoAPP.git'
+            }
+        }
+
+        stage('Check Docker Version') {
+            steps {
+                script {
+                    sh 'docker --version'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("my-go-app", ".")
+                }
+            }
+        }
+
+        stage('Load Docker Image to Minikube') {
+            steps {
+                script {
+                    // Charger l'image Docker dans Minikube
+                    sh 'minikube image load my-go-app'
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes (Development)') {
+            steps {
+                script {
+                    // Appliquer les fichiers de déploiement
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
+                }
+            }
+        }
+
+        
+        stage('Test Deployment in Development') {
+            steps {
+                script {
+                    // Vérifier le déploiement
+                    sh 'kubectl rollout status deployment/my-go-app-deployment'
+                    
+                    // Faire un port-forwarding du service sur le port local
+                    sh 'kubectl port-forward svc/my-go-app-service 8081:8081 &'
+                    sleep 5 // Attendre un peu que le port-forwarding soit actif
+
+                    // Tester l'endpoint avec curl
+                    sh 'curl http://localhost:8081/whoami'
+                }
+            }
+        }
+
+
+        stage('Deploy to Kubernetes (Production)') {
+            steps {
+                script {
+                    // Déployer sur l'environnement de production
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
+                }
+            }
+        }
+    }
+}
